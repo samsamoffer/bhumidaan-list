@@ -23,7 +23,7 @@ body {
   z-index: 1;
 }
 
-/* Ticker container */
+/* Ticker */
 #ticker {
   position: fixed;
   bottom: 0;
@@ -36,27 +36,25 @@ body {
   z-index: 2;
 }
 
-/* Moving track */
 #tickerTrack {
   display: flex;
   white-space: nowrap;
   animation: scrollLeft linear infinite;
 }
 
-/* Text blocks */
 .tickerItem {
   font-size: 28px;
   font-weight: bold;
   padding-right: 80px;
 }
 
-/* Smooth infinite scroll */
+/* Smooth loop */
 @keyframes scrollLeft {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 
-/* Optional fade edges */
+/* Fade edges (pro look) */
 #ticker::before,
 #ticker::after {
   content: "";
@@ -98,7 +96,7 @@ const folderId = "15NZTsQ1oAoJNXat-QPbLfDwNIz5Fh9n8";
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
 
 // ================================
-// SLIDESHOW FROM GOOGLE DRIVE
+// GOOGLE DRIVE SLIDESHOW
 // ================================
 const driveUrl =
   `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${apiKey}&fields=files(id,name)`;
@@ -107,30 +105,39 @@ let images = [];
 let index = 0;
 const slide = document.getElementById("slideshow");
 
-fetch(driveUrl)
-  .then(res => res.json())
-  .then(data => {
-    images = data.files.map(file =>
-      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`
-    );
-
-    if (images.length === 0) {
-      slide.alt = "No images found";
-      return;
-    }
-
-    showNext();
-    setInterval(showNext, 3000);
-  })
-  .catch(err => {
-    console.error(err);
-    slide.alt = "Error loading images";
-  });
-
-function showNext() {
-  slide.src = images[index];
-  index = (index + 1) % images.length;
+// Fetch images
+function loadImages() {
+  return fetch(driveUrl)
+    .then(res => res.json())
+    .then(data => {
+      images = data.files.map(file =>
+        `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`
+      );
+    })
+    .catch(err => {
+      console.error("Drive fetch error:", err);
+    });
 }
+
+// Show next image
+function showNext() {
+  if (images.length === 0) return;
+
+  slide.src = images[index];
+  index++;
+
+  // When last image ends → reload images
+  if (index >= images.length) {
+    index = 0;
+    loadImages(); // refresh list
+  }
+}
+
+// Init slideshow
+loadImages().then(() => {
+  showNext();
+  setInterval(showNext, 3000);
+});
 
 // ================================
 // SMOOTH CONTINUOUS TICKER
@@ -148,13 +155,12 @@ fetch(csvUrl)
       return `${c[1]}: ${c[2]} SQFT`;
     }).join("   —   ");
 
-    // Duplicate content for seamless loop
     tickerTrack.innerHTML = `
       <div class="tickerItem">${text}</div>
       <div class="tickerItem">${text}</div>
     `;
 
-    // Auto speed based on length
+    // Dynamic speed
     const duration = Math.max(20, text.length * 0.4);
     tickerTrack.style.animationDuration = duration + "s";
   })
