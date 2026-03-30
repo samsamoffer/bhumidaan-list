@@ -55,8 +55,11 @@ body {
 <!-- Google Slides embed -->
 <iframe
   id="slides"
-  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pub?start=true&loop=true&delayms=3000"
-  allowfullscreen>
+  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pubembed?start=true&loop=true&delayms=3000"
+  frameborder="0"
+  allowfullscreen="true"
+  mozallowfullscreen="true"
+  webkitallowfullscreen="true">
 </iframe>
 
 <!-- Donor ticker -->
@@ -68,15 +71,16 @@ body {
 // Google Sheet CSV URL
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
 
-// Load donor list: Name + SQFT only
+// Load donor list in desired format
 fetch(csvUrl)
   .then(res => res.text())
   .then(data => {
     let rows = data.trim().split("\n").slice(1); // skip header
-    let text = rows.map(r => {
+    let text = "Bhumidaan donors: ";
+    text += rows.map(r => {
       let c = r.split(",");
-      return `${c[1]} — ${c[2]} SQFT`; // only name and SQFT
-    }).join("    "); // space between donors
+      return `${c[1]}: ${c[2]} SQFT`;
+    }).join(" - "); // separator between donors
     document.getElementById("tickerText").innerText = text;
   });
 </script>
