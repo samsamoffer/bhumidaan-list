@@ -6,52 +6,38 @@
 body {
   margin: 0;
   background: black;
-  font-family: Arial, sans-serif;
   color: white;
+  font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
-/* Center Google Slides iframe */
-#slides {
+/* Slideshow */
+#slideshow {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 90%;
   height: 80%;
-  border: none;
+  object-fit: contain;
   z-index: 1;
 }
 
-/* Overlay to cover entire Google Slides bottom control bar */
-#slidesControlsCover {
-  position: absolute;
-  top: calc(50% + 40%);
-  left: 50%;
-  width: 90%;
-  height: 60px;
-  background: black;
-  z-index: 2;
-  pointer-events: none;
-  transform: translate(-50%, 0);
-}
-
-/* Bottom ticker */
+/* Ticker */
 #ticker {
   position: fixed;
   bottom: 0;
   width: 100%;
   height: 80px;
   background: rgba(0,0,0,0.85);
-  overflow: hidden;
   display: flex;
   align-items: center;
-  z-index: 3;
+  z-index: 2;
 }
 
 #tickerText {
   display: inline-block;
-  white-space: nowrap; /* single line */
+  white-space: nowrap;
   padding-left: 100%;
   animation: scrollLeft 60s linear infinite;
   font-size: 28px;
@@ -64,21 +50,10 @@ body {
 }
 </style>
 </head>
-
 <body>
 
-<!-- Google Slides embed -->
-<iframe
-  id="slides"
-  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pubembed?start=true&loop=true&delayms=3000"
-  frameborder="0"
-  allowfullscreen="true"
-  mozallowfullscreen="true"
-  webkitallowfullscreen="true">
-</iframe>
-
-<!-- Overlay to cover entire Google Slides bottom control bar -->
-<div id="slidesControlsCover"></div>
+<!-- Slideshow -->
+<img id="slideshow" src="">
 
 <!-- Donor ticker -->
 <div id="ticker">
@@ -86,19 +61,66 @@ body {
 </div>
 
 <script>
-// Google Sheet CSV URL
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
+// ================================
+// Configuration (replace below)
+// ================================
 
-// Load donor list in desired format
+const apiKey = "AIzaSyD-edIrNmPWggpa9sQV8wnGJLt-cH18pw4";
+const folderId = "15NZTsQ1oAoJNXat-QPbLfDwNIz5Fh9n8";
+
+// ================================
+// 1. Load Images from Drive Folder
+// ================================
+
+// Drive API URL to list files in folder
+const driveFilesUrl =
+  `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${apiKey}&fields=files(id,name,mimeType)`;
+
+let images = [];
+let currentIndex = 0;
+const slideshowEl = document.getElementById("slideshow");
+
+fetch(driveFilesUrl)
+  .then(res => res.json())
+  .then(data => {
+    images = data.files.map(file =>
+      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}`
+    );
+
+    if (images.length === 0) {
+      slideshowEl.alt = "No images found in Drive folder.";
+      return;
+    }
+
+    // Start slideshow
+    showNextImage();
+    setInterval(showNextImage, 3000);
+  })
+  .catch(err => {
+    console.error("Drive API error:", err);
+    slideshowEl.alt = "Error loading images.";
+  });
+
+function showNextImage() {
+  slideshowEl.src = images[currentIndex];
+  currentIndex = (currentIndex + 1) % images.length;
+}
+
+// =================================
+// 2. Load Donor Ticker
+// =================================
+const csvUrl =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
+
 fetch(csvUrl)
   .then(res => res.text())
   .then(data => {
-    let rows = data.trim().split("\n").slice(1); // skip header
+    let rows = data.trim().split("\n").slice(1);
     let text = "Bhumidaan donors: ";
     text += rows.map(r => {
       let c = r.split(",");
       return `${c[1]}: ${c[2]} SQFT`;
-    }).join(" - "); // separator between donors
+    }).join("   —   ");
     document.getElementById("tickerText").innerText = text;
   });
 </script>
