@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <meta http-equiv="refresh" content="60">
 <style>
 body {
   margin: 0;
   background: black;
   font-family: Arial, sans-serif;
-  color: white;
   overflow: hidden;
+  color: white;
 }
 
-/* Center Google Slides iframe */
+/* Fullscreen Google Slides */
 #slides {
   position: absolute;
   top: 50%;
@@ -22,40 +23,56 @@ body {
   border: none;
 }
 
-/* Bottom ticker */
+/* Fancy bottom ticker container */
 #ticker {
   position: fixed;
   bottom: 0;
   width: 100%;
-  height: 80px;
-  background: rgba(0,0,0,0.85);
+  height: 100px;
+  background: rgba(0,0,0,0.7);
   overflow: hidden;
   display: flex;
   align-items: center;
+  border-top: 3px solid gold;
 }
 
+/* Scrolling text */
 #tickerText {
   display: inline-block;
-  white-space: nowrap; /* single line */
-  padding-left: 100%;
-  animation: scrollLeft 60s linear infinite;
+  white-space: nowrap;
   font-size: 28px;
   font-weight: bold;
+  color: #ffdf00;
+  text-shadow: 2px 2px 8px #ff9900;
+  padding-left: 100%;
 }
 
+/* Glowing boxes for each donor */
+#tickerText span {
+  display: inline-block;
+  padding: 5px 20px;
+  margin-right: 15px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  font-weight: bold;
+  color: #ffdf00;
+  text-shadow: 2px 2px 8px #ff9900;
+}
+
+/* Scroll animation */
 @keyframes scrollLeft {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  100% { transform: translateX(-50%); } /* will duplicate text for seamless loop */
 }
 </style>
 </head>
 
 <body>
 
-<!-- Google Slides embed -->
+<!-- Google Slides iframe -->
 <iframe
   id="slides"
-  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/embed?start=true&loop=true&delayms=3000"
+  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pub?start=true&loop=true&delayms=3000"
   frameborder="0"
   width="100%"
   height="100%"
@@ -71,17 +88,23 @@ body {
 // Google Sheet CSV URL
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
 
-// Load donor list in desired format
+function startTicker(donorList) {
+  const ticker = document.getElementById("tickerText");
+  ticker.innerHTML = donorList + " "; // duplicate space for smooth scroll
+  // Duplicate content for seamless scroll
+  ticker.innerHTML += donorList + " ";
+  ticker.style.animation = "scrollLeft 60s linear infinite";
+}
+
 fetch(csvUrl)
   .then(res => res.text())
   .then(data => {
     let rows = data.trim().split("\n").slice(1); // skip header
-    let text = "Bhumidaan donors: ";
-    text += rows.map(r => {
+    let donorSpans = rows.map(r => {
       let c = r.split(",");
-      return `${c[1]}: ${c[2]} SQFT`;
-    }).join(" - "); // separator between donors
-    document.getElementById("tickerText").innerText = text;
+      return `<span>${c[1]}: ${c[2]} SQFT</span>`;
+    }).join(""); 
+    startTicker(donorSpans);
   });
 </script>
 
