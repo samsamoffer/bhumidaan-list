@@ -11,7 +11,7 @@ body {
   overflow: hidden;
 }
 
-/* Center Google Slides iframe */
+/* Full-screen Google Slides */
 #slides {
   position: absolute;
   top: 0;
@@ -41,7 +41,7 @@ body {
   width: 100%;
   height: 80px;
   overflow: hidden;
-  z-index: 10; /* above overlay and slides */
+  z-index: 10;
   display: flex;
   align-items: center;
 }
@@ -56,12 +56,10 @@ body {
   animation: scrollLeft 30s linear infinite;
 }
 
-/* Duplicate wrapper for seamless scroll */
 #tickerText span {
   padding-right: 50px; /* gap between repetitions */
 }
 
-/* Smooth scrolling animation */
 @keyframes scrollLeft {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); } /* scroll half width to loop */
@@ -71,7 +69,7 @@ body {
 
 <body>
 
-<!-- Google Slides embed -->
+<!-- Google Slides embed (fixed URL with /pub) -->
 <iframe
   id="slides"
   src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pub?start=true&loop=true&delayms=3000"
@@ -90,10 +88,10 @@ body {
 </div>
 
 <script>
-// Google Sheet CSV URL
+// Google Sheet CSV URL (must be published to web)
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
 
-// Load donor list and duplicate text for seamless scroll
+// Load donor list and duplicate for seamless scroll
 fetch(csvUrl)
   .then(res => res.text())
   .then(data => {
@@ -103,10 +101,14 @@ fetch(csvUrl)
       let c = r.split(",");
       return `${c[1]}: ${c[2]} SQFT`;
     }).join(" - ");
-    
-    // Duplicate the text for smooth scroll
+
+    // Duplicate text for smooth infinite scrolling
     const ticker = document.getElementById("tickerText");
     ticker.innerHTML = `<span>${text}</span><span>${text}</span>`;
+  })
+  .catch(err => {
+    document.getElementById("tickerText").innerText = "Donor list not available";
+    console.error("Error loading donors:", err);
   });
 </script>
 
