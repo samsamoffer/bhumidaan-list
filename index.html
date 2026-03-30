@@ -23,64 +23,91 @@ body {
   z-index: 1;
 }
 
-/* Ticker */
+/* Ticker container */
 #ticker {
   position: fixed;
   bottom: 0;
   width: 100%;
   height: 80px;
   background: rgba(0,0,0,0.85);
+  overflow: hidden;
   display: flex;
   align-items: center;
   z-index: 2;
 }
 
-#tickerText {
-  display: inline-block;
+/* Moving track */
+#tickerTrack {
+  display: flex;
   white-space: nowrap;
-  padding-left: 100%;
-  animation: scrollLeft 60s linear infinite;
-  font-size: 28px;
-  font-weight: bold;
+  animation: scrollLeft linear infinite;
 }
 
+/* Text blocks */
+.tickerItem {
+  font-size: 28px;
+  font-weight: bold;
+  padding-right: 80px;
+}
+
+/* Smooth infinite scroll */
 @keyframes scrollLeft {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Optional fade edges */
+#ticker::before,
+#ticker::after {
+  content: "";
+  position: absolute;
+  width: 80px;
+  height: 100%;
+  top: 0;
+  z-index: 3;
+}
+
+#ticker::before {
+  left: 0;
+  background: linear-gradient(to right, black, transparent);
+}
+
+#ticker::after {
+  right: 0;
+  background: linear-gradient(to left, black, transparent);
 }
 </style>
 </head>
+
 <body>
 
 <!-- Slideshow -->
 <img id="slideshow" src="">
 
-<!-- Donor ticker -->
+<!-- Ticker -->
 <div id="ticker">
-  <div id="tickerText">Loading donors...</div>
+  <div id="tickerTrack"></div>
 </div>
 
 <script>
 // ================================
-// Configuration (replace below)
+// CONFIG
 // ================================
-
-const apiKey = "AIzaSyD-edIrNmPWggpa9sQV8wnGJLt-cH18pw4";
+const apiKey = "YOUR_GOOGLE_API_KEY_HERE";
 const folderId = "15NZTsQ1oAoJNXat-QPbLfDwNIz5Fh9n8";
+const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
 
 // ================================
-// 1. Load Images from Drive Folder
+// SLIDESHOW FROM GOOGLE DRIVE
 // ================================
-
-// Drive API URL to list files in folder
-const driveFilesUrl =
-  `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${apiKey}&fields=files(id,name,mimeType)`;
+const driveUrl =
+  `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+mimeType+contains+'image/'&key=${apiKey}&fields=files(id,name)`;
 
 let images = [];
-let currentIndex = 0;
-const slideshowEl = document.getElementById("slideshow");
+let index = 0;
+const slide = document.getElementById("slideshow");
 
-fetch(driveFilesUrl)
+fetch(driveUrl)
   .then(res => res.json())
   .then(data => {
     images = data.files.map(file =>
@@ -88,40 +115,55 @@ fetch(driveFilesUrl)
     );
 
     if (images.length === 0) {
-      slideshowEl.alt = "No images found in Drive folder.";
+      slide.alt = "No images found";
       return;
     }
 
-    // Start slideshow
-    showNextImage();
-    setInterval(showNextImage, 3000);
+    showNext();
+    setInterval(showNext, 3000);
   })
   .catch(err => {
-    console.error("Drive API error:", err);
-    slideshowEl.alt = "Error loading images.";
+    console.error(err);
+    slide.alt = "Error loading images";
   });
 
-function showNextImage() {
-  slideshowEl.src = images[currentIndex];
-  currentIndex = (currentIndex + 1) % images.length;
+function showNext() {
+  slide.src = images[index];
+  index = (index + 1) % images.length;
 }
 
-// =================================
-// 2. Load Donor Ticker
-// =================================
-const csvUrl =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
+// ================================
+// SMOOTH CONTINUOUS TICKER
+// ================================
+const tickerTrack = document.getElementById("tickerTrack");
 
 fetch(csvUrl)
   .then(res => res.text())
   .then(data => {
     let rows = data.trim().split("\n").slice(1);
+
     let text = "Bhumidaan donors: ";
     text += rows.map(r => {
       let c = r.split(",");
       return `${c[1]}: ${c[2]} SQFT`;
     }).join("   —   ");
-    document.getElementById("tickerText").innerText = text;
+
+    // Duplicate content for seamless loop
+    tickerTrack.innerHTML = `
+      <div class="tickerItem">${text}</div>
+      <div class="tickerItem">${text}</div>
+    `;
+
+    // Auto speed based on length
+    const duration = Math.max(20, text.length * 0.4);
+    tickerTrack.style.animationDuration = duration + "s";
+  })
+  .catch(() => {
+    tickerTrack.innerHTML = `
+      <div class="tickerItem">Donor list not available</div>
+      <div class="tickerItem">Donor list not available</div>
+    `;
+    tickerTrack.style.animationDuration = "30s";
   });
 </script>
 
