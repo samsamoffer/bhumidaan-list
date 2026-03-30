@@ -20,20 +20,6 @@ body {
   width: 90%;
   height: 80%;
   border: none;
-  z-index: 1;
-}
-
-/* Transparent overlay to hide slide controls */
-#slidesOverlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  height: 80%;
-  z-index: 2;
-  pointer-events: none; /* allows autoplay underneath */
-  background: rgba(0,0,0,0); /* fully transparent */
 }
 
 /* Bottom ticker */
@@ -46,7 +32,6 @@ body {
   overflow: hidden;
   display: flex;
   align-items: center;
-  z-index: 3;
 }
 
 #tickerText {
@@ -76,9 +61,6 @@ body {
   mozallowfullscreen="true"
   webkitallowfullscreen="true">
 </iframe>
-
-<!-- Transparent overlay to hide controls -->
-<div id="slidesOverlay"></div>
 
 <!-- Donor ticker -->
 <div id="ticker">
