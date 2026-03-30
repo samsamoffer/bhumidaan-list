@@ -14,38 +14,57 @@ body {
 /* Center Google Slides iframe */
 #slides {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  height: 80%;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   border: none;
+  pointer-events: none; /* disables clicks, hides controls */
+  z-index: 1;
 }
 
-/* Bottom ticker */
+/* Fade overlay at bottom to make ticker readable */
+#fadeOverlay {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 100px; /* slightly taller than ticker */
+  background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Bottom ticker container */
 #ticker {
   position: fixed;
   bottom: 0;
   width: 100%;
   height: 80px;
-  background: rgba(0,0,0,0.85);
   overflow: hidden;
+  z-index: 10; /* above overlay and slides */
   display: flex;
   align-items: center;
 }
 
+/* Smooth infinite ticker text */
 #tickerText {
   display: inline-block;
-  white-space: nowrap; /* single line */
-  padding-left: 100%;
-  animation: scrollLeft 60s linear infinite;
+  white-space: nowrap;
   font-size: 28px;
   font-weight: bold;
+  will-change: transform;
+  animation: scrollLeft 30s linear infinite;
 }
 
+/* Duplicate wrapper for seamless scroll */
+#tickerText span {
+  padding-right: 50px; /* gap between repetitions */
+}
+
+/* Smooth scrolling animation */
 @keyframes scrollLeft {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  100% { transform: translateX(-50%); } /* scroll half width to loop */
 }
 </style>
 </head>
@@ -55,12 +74,15 @@ body {
 <!-- Google Slides embed -->
 <iframe
   id="slides"
-  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pubembed?start=true&loop=true&delayms=3000"
+  src="https://docs.google.com/presentation/d/e/2PACX-1vSk4n47IYjy64hbH-KF0P9GG7uQTw1WHYoWBJlqk1jNy9CC5BUWFGsTXZf3i0K2-E_4b355Ot6I6HpX/pub?start=true&loop=true&delayms=3000"
   frameborder="0"
   allowfullscreen="true"
   mozallowfullscreen="true"
   webkitallowfullscreen="true">
 </iframe>
+
+<!-- Fade overlay -->
+<div id="fadeOverlay"></div>
 
 <!-- Donor ticker -->
 <div id="ticker">
@@ -71,7 +93,7 @@ body {
 // Google Sheet CSV URL
 const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcOCFw-9EJbvNN4dRxmJrR50mmHlzNQg8Q19rJhCQbm0icPRD3aUsK7xlq26_NHQ/pub?output=csv";
 
-// Load donor list in desired format
+// Load donor list and duplicate text for seamless scroll
 fetch(csvUrl)
   .then(res => res.text())
   .then(data => {
@@ -80,8 +102,11 @@ fetch(csvUrl)
     text += rows.map(r => {
       let c = r.split(",");
       return `${c[1]}: ${c[2]} SQFT`;
-    }).join(" - "); // separator between donors
-    document.getElementById("tickerText").innerText = text;
+    }).join(" - ");
+    
+    // Duplicate the text for smooth scroll
+    const ticker = document.getElementById("tickerText");
+    ticker.innerHTML = `<span>${text}</span><span>${text}</span>`;
   });
 </script>
 
